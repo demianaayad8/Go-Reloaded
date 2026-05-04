@@ -272,4 +272,3 @@ func processText(text string) string {
 
 	return strings.Join(words, " ")
 }
-
