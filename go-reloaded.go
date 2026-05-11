@@ -180,23 +180,34 @@ func processModifiers(words []string) []string {
 	return result
 }
 
+func isPunctuation(s string) bool { // Helper function - checks if string is only punctuation marks
+	if len(s) == 0 {
+		return false
+	}
+	punctuationMarks := ".,!?:;"
+
+	for _, char := range s {
+		if !strings.ContainsRune(punctuationMarks, char) {
+			return false // Found a non-punctuation character
+		}
+	}
+
+	return true // All characters were punctuation
+}
+
 func fixPunctuation(words []string) []string {
 	result := []string{}
 
 	for _, word := range words {
-		if word == "." || word == "," || word == "!" || word == "?" || word == ":" ||
-			word == ";" || word == "..." || word == "!!" || word == "!?" ||
-			word == "??" || word == "?!" || word == "!!!" || word == ".." {
-
-			if len(result) > 0 {
-				lastIndex := len(result) - 1
-				result[lastIndex] = result[lastIndex] + word
-			}
-
-			continue
+		// If this word is only punctuation AND we have previous words
+		if isPunctuation(word) && len(result) > 0 {
+			// Attach it to the last word
+			lastIndex := len(result) - 1
+			result[lastIndex] = result[lastIndex] + word
+		} else {
+			// Regular word - add it normally
+			result = append(result, word)
 		}
-
-		result = append(result, word)
 	}
 
 	return result
@@ -211,24 +222,28 @@ func fixQuotes(words []string) []string {
 
 		if word == "'" {
 			if !insideQuote {
+				// Opening quote: attach to NEXT word
 				insideQuote = true
 
+				// Check if there's a next word
 				if i+1 < len(words) {
 					words[i+1] = "'" + words[i+1]
 				}
+			} else {
+				// Closing quote: attach to PREVIOUS word
+				insideQuote = false
 
-				continue
+				// Check if there are previous words
+				if len(result) > 0 {
+					lastIndex := len(result) - 1
+					result[lastIndex] = result[lastIndex] + "'"
+				}
 			}
-
-			if len(result) > 0 {
-				lastIndex := len(result) - 1
-				result[lastIndex] = result[lastIndex] + "'"
-			}
-
-			insideQuote = false
+			// Skip the quote itself (don't add to result)
 			continue
 		}
 
+		// Regular word - add it
 		result = append(result, word)
 	}
 
