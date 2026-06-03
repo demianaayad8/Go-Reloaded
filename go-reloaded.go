@@ -197,17 +197,39 @@ func isPunctuation(s string) bool { // Helper function - checks if string is onl
 
 func fixPunctuation(words []string) []string {
 	result := []string{}
+	punctuationMarks := ".,!?:;"
 
 	for _, word := range words {
-		// If this word is only punctuation AND we have previous words
+		if word == "" {
+			continue
+		}
+
+		// Case 1: punctuation alone, like "," or "." or "!"
 		if isPunctuation(word) && len(result) > 0 {
-			// Attach it to the last word
 			lastIndex := len(result) - 1
 			result[lastIndex] = result[lastIndex] + word
-		} else {
-			// Regular word - add it normally
-			result = append(result, word)
+			continue
 		}
+
+		// Case 2: word starts with punctuation, like ",because" or ",s"
+		if len(word) > 0 && strings.ContainsRune(punctuationMarks, rune(word[0])) {
+			punctuation := word[0:1]
+			restOfWord := word[1:]
+
+			if len(result) > 0 {
+				lastIndex := len(result) - 1
+				result[lastIndex] = result[lastIndex] + punctuation
+			}
+
+			if restOfWord != "" {
+				result = append(result, restOfWord)
+			}
+
+			continue
+		}
+
+		// Case 3: normal word
+		result = append(result, word)
 	}
 
 	return result
