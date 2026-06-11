@@ -180,22 +180,55 @@ func processModifiers(words []string) []string {
 	return result
 }
 
+func isPunctuation(s string) bool { // Helper function - checks if string is only punctuation marks
+	if len(s) == 0 {
+		return false
+	}
+	punctuationMarks := ".,!?:;"
+
+	for _, char := range s {
+		if !strings.ContainsRune(punctuationMarks, char) {
+			return false // Found a non-punctuation character
+		}
+	}
+
+	return true // All characters were punctuation
+}
+
 func fixPunctuation(words []string) []string {
 	result := []string{}
+	punctuationMarks := ".,!?:;"
 
 	for _, word := range words {
-		if word == "." || word == "," || word == "!" || word == "?" || word == ":" ||
-			word == ";" || word == "..." || word == "!!" || word == "!?" ||
-			word == "??" || word == "?!" || word == "!!!" || word == ".." {
+		if word == "" {
+			continue
+		}
+
+		// Case 1: punctuation alone, like "," or "." or "!"
+		if isPunctuation(word) && len(result) > 0 {
+			lastIndex := len(result) - 1
+			result[lastIndex] = result[lastIndex] + word
+			continue
+		}
+
+		// Case 2: word starts with punctuation, like ",because" or ",s"
+		if len(word) > 0 && strings.ContainsRune(punctuationMarks, rune(word[0])) {
+			punctuation := word[0:1]
+			restOfWord := word[1:]
 
 			if len(result) > 0 {
 				lastIndex := len(result) - 1
-				result[lastIndex] = result[lastIndex] + word
+				result[lastIndex] = result[lastIndex] + punctuation
+			}
+
+			if restOfWord != "" {
+				result = append(result, restOfWord)
 			}
 
 			continue
 		}
 
+		// Case 3: normal word
 		result = append(result, word)
 	}
 
@@ -211,24 +244,28 @@ func fixQuotes(words []string) []string {
 
 		if word == "'" {
 			if !insideQuote {
+				// Opening quote: attach to NEXT word
 				insideQuote = true
 
+				// Check if there's a next word
 				if i+1 < len(words) {
 					words[i+1] = "'" + words[i+1]
 				}
+			} else {
+				// Closing quote: attach to PREVIOUS word
+				insideQuote = false
 
-				continue
+				// Check if there are previous words
+				if len(result) > 0 {
+					lastIndex := len(result) - 1
+					result[lastIndex] = result[lastIndex] + "'"
+				}
 			}
-
-			if len(result) > 0 {
-				lastIndex := len(result) - 1
-				result[lastIndex] = result[lastIndex] + "'"
-			}
-
-			insideQuote = false
+			// Skip the quote itself (don't add to result)
 			continue
 		}
 
+		// Regular word - add it
 		result = append(result, word)
 	}
 
@@ -272,4 +309,3 @@ func processText(text string) string {
 
 	return strings.Join(words, " ")
 }
-
